@@ -1,7 +1,7 @@
 #
 # This file is part of LiteX-Boards.
 #
-# Copyright (c) 2020 Piotr Esden-Tempski <piotr@esden.net>
+# Copyright (c) 2021 Omkar Bhilare <ombhilare999@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause
 
 # BeagleWire FPGA Cape:
