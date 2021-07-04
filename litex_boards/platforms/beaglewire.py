@@ -4,10 +4,11 @@
 # Copyright (c) 2020 Piotr Esden-Tempski <piotr@esden.net>
 # SPDX-License-Identifier: BSD-2-Clause
 
-# iCEBreaker FPGA:
-# - Crowd Supply campaign: https://www.crowdsupply.com/1bitsquared/icebreaker
-# - 1BitSquared Store: https://1bitsquared.com/products/icebreaker
-# - Design files: https://github.com/icebreaker-fpga/icebreaker
+# BeagleWire FPGA Cape:
+# - Crowd Supply campaign: https://www.crowdsupply.com/qwerty-embedded-design/beaglewire
+# - Docs: https://beaglewire.github.io/
+# - Software Repo: https://github.com/BeagleWire/BeagleWire
+# - Hardware Files: https://github.com/BeagleWire/beagle-wire
 
 from litex.build.generic_platform import *
 from litex.build.lattice import LatticePlatform
@@ -30,8 +31,9 @@ _io = [
     ("user_btn_0",    0, Pins("25"), IOStandard("LVCMOS33")),
     ("user_btn_1",    1, Pins("26"), IOStandard("LVCMOS33")),
 
-    # GPMC_AD
-     ("gpmc_ad", 0,
+    # GPMC
+     ("gpmc", 0,
+        # GPMC_AD
         Subsignal("gpmc_ad_0", Pins("134"), IOStandard("LVCMOS33")),
         Subsignal("gpmc_ad_1", Pins("136"), IOStandard("LVCMOS33")),
         Subsignal("gpmc_ad_3", Pins("21"), IOStandard("LVCMOS33")),
@@ -47,10 +49,7 @@ _io = [
         Subsignal("gpmc_ad_13", Pins("3"), IOStandard("LVCMOS33")),
         Subsignal("gpmc_ad_14", Pins("144"), IOStandard("LVCMOS33")),
         Subsignal("gpmc_ad_15", Pins("143"), IOStandard("LVCMOS33")),
-    ),
-
-    # GPMC Control
-     ("gpmc_control", 0,
+        # GPMC_Control
         Subsignal("gpmc_advn", Pins("19"),  IOStandard("LVCMOS33")),
         Subsignal("gpmc_csn1", Pins("137"), IOStandard("LVCMOS33")),
         Subsignal("gpmc_clk",  Pins("142"), IOStandard("LVCMOS33")),
