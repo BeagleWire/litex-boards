@@ -23,8 +23,8 @@ _io = [
     ("spiflash", 0,
         Subsignal("cs_n", Pins("71"), IOStandard("LVCMOS33")),
         Subsignal("clk",  Pins("70"), IOStandard("LVCMOS33")),
-        Subsignal("mosi", Pins("68"), IOStandard("LVCMOS33")),
-        Subsignal("miso", Pins("67"), IOStandard("LVCMOS33")),
+        Subsignal("mosi", Pins("67"), IOStandard("LVCMOS33")),
+        Subsignal("miso", Pins("68"), IOStandard("LVCMOS33")),
     ),
 
     # SDR SDRAM

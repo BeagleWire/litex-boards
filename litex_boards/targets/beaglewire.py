@@ -54,7 +54,7 @@ class _CRG(Module):
 
         # PLL
         self.submodules.pll = pll = iCE40PLL()
-        self.comb += pll.reset.eq(~rst_n) # FIXME: Add proper iCE40PLL reset support and add back | self.rst.
+        self.comb += pll.reset.eq(rst_n) # FIXME: Add proper iCE40PLL reset support and add back | self.rst.
         pll.register_clkin(clk100, 100e6)
         pll.create_clkout(self.cd_sys, sys_clk_freq, with_reset=False)
         self.specials += AsyncResetSynchronizer(self.cd_sys, ~por_done | ~pll.locked)
