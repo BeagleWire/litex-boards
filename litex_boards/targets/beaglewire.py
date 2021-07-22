@@ -63,7 +63,7 @@ class _CRG(Module):
         platform.add_period_constraint(self.cd_sys.clk, 1e9/sys_clk_freq)
 
         # SDRAM clock
-        self.specials += DDROutput(1, 0, platform.request("sdram_clock"),  ClockSignal("sys"))
+        self.specials += DDROutput(0, 1, platform.request("sdram_clock"),  ClockSignal("sys"))
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
