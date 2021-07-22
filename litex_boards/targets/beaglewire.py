@@ -13,6 +13,8 @@ import argparse
 from migen import *
 from migen.genlib.resetsync import AsyncResetSynchronizer
 
+from litex.build.io import DDROutput
+
 #from litex.build.io import CRG
 
 from litex_boards.platforms import beaglewire
@@ -26,7 +28,7 @@ from litex.soc.cores.led import LedChaser
 
 from litedram import modules as litedram_modules
 from litedram.phy import GENSDRPHY
-from litedram.modules import AS4C32M8
+from litedram.modules import MT48LC32M8
 
 kB = 1024
 mB = 1024*kB
@@ -60,6 +62,8 @@ class _CRG(Module):
         self.specials += AsyncResetSynchronizer(self.cd_sys, ~por_done | ~pll.locked)
         platform.add_period_constraint(self.cd_sys.clk, 1e9/sys_clk_freq)
 
+        # SDRAM clock
+        self.specials += DDROutput(1, 0, platform.request("sdram_clock"),  ClockSignal("sys"))
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -100,15 +104,11 @@ class BaseSoC(SoCCore):
             sys_clk_freq = sys_clk_freq)
         self.add_csr("leds")
 
-        self.submodules.sdrphy = GENSDRPHY(platform.request("sdram"), cl=2)
+        self.submodules.sdrphy = GENSDRPHY(platform.request("sdram"), sys_clk_freq )
         self.add_sdram("sdram",
             phy                     = self.sdrphy,
-            module                  = AS4C32M8(sys_clk_freq, "1:1"),
-            origin                  = self.mem_map["main_ram"],
-            size                    = kwargs.get("max_sdram_size", 0x40000000),
-            l2_cache_size           = kwargs.get("l2_size", 1024),
-            l2_cache_min_data_width = kwargs.get("min_l2_data_width", 128),
-            l2_cache_reverse        = True
+            module                  = MT48LC32M8(sys_clk_freq, "1:1"),
+            l2_cache_size           = kwargs.get("l2_size", 1024)
         )
 
 
