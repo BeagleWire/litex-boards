@@ -18,14 +18,13 @@ from litex.build.io import DDROutput
 #from litex.build.io import CRG
 
 from litex_boards.platforms import beaglewire
-
+from litex.soc.interconnect import wishbone
 from litex.soc.cores.spi_flash import SpiFlash
 from litex.soc.cores.clock import iCE40PLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
-
 from litedram import modules as litedram_modules
 from litedram.phy import GENSDRPHY
 from litedram.modules import MT48LC32M8
@@ -97,8 +96,15 @@ class BaseSoC(SoCCore):
             size   = 32*kB,
             linker = True)
         )
+        
+        # Wishbone ---------------------------------------------------------------------------------
+        wb_bus = wishbone.Interface(data_width=16,adr_width=32)
+        self.bus.add_master(master=wb_bus)
+        platform.add_extension(wb_bus.get_ios("wb"))
+        wb_pads = platform.request("wb")
+        self.comb += wb_bus.connect_to_pads(wb_pads, mode="slave")
 
-        # Leds -------------------------------------------------------------------------------------
+        # Leds ---------------- ---------------------------------------------------------------------
         self.submodules.leds = LedChaser(
             pads         = platform.request_all("user_led"),
             sys_clk_freq = sys_clk_freq)
@@ -118,7 +124,7 @@ def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Beaglewire")
     parser.add_argument("--build",             action="store_true", help="Build bitstream")
     parser.add_argument("--bios-flash-offset", default=0x60000,     help="BIOS offset in SPI Flash (default: 0x60000)")
-    parser.add_argument("--sys-clk-freq",      default=50e6,       help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--sys-clk-freq",      default=50e6,        help="System clock frequency (default: 50MHz)")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
