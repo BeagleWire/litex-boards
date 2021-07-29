@@ -58,6 +58,8 @@ wire     wbm_cycle;      //Wishbone Bus Cycle in Progress
 wire     wbm_strobe;     //Wishbone Data Strobe
 wire     wbm_write;      //Wishbone Write Access 
 wire     wbm_ack;        //Wishbone Acknowledge Signal 
+wire     reset;          //Reset Signal
+assign reset = 1'b1;     //Active Low Signal
 
 gpmc_to_wishbone # (
     .ADDR_WIDTH(ADDR_WIDTH),      // Macro for Address  
@@ -67,7 +69,7 @@ gpmc_to_wishbone # (
 ) wb_controller (
     //System Clock and Reset
     .clk(clk100),                    //FPGA Clock
-    .reset(user_btn_n),              //Master Reset for Wishbone Bus
+    .reset(reset),              //Master Reset for Wishbone Bus
     
     // GPMC INTERFACE 
     .gpmc_ad(gpmc_ad),            //Data Multiplexed with Address
