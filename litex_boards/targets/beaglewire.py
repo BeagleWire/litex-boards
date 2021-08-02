@@ -18,16 +18,19 @@ from litex.build.io import DDROutput
 #from litex.build.io import CRG
 
 from litex_boards.platforms import beaglewire
-from litex.soc.interconnect import wishbone
+
 from litex.soc.cores.spi_flash import SpiFlash
 from litex.soc.cores.clock import iCE40PLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
+from litex.soc.cores.uart import UARTWishboneBridge
 from litedram import modules as litedram_modules
 from litedram.phy import GENSDRPHY
 from litedram.modules import MT48LC32M8
+from litex.soc.integration.builder import Builder
+from litex.soc.interconnect.csr import AutoCSR, CSRStatus, CSRStorage
 
 kB = 1024
 mB = 1024*kB
@@ -77,15 +80,22 @@ class BaseSoC(SoCCore):
 
         # Set CPU variant / reset address
         kwargs["cpu_reset_address"] = self.mem_map["spiflash"] + bios_flash_offset
+        kwargs["uart_name"]   = "crossover"
 
         # SoCCore ----------------------------------------------------------------------------------
-        SoCCore.__init__(self, platform, sys_clk_freq,
+        SoCCore.__init__(self, platform, sys_clk_freq, 
             ident          = "LiteX SoC on Beaglewire",
             ident_version  = True,
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = _CRG(platform, sys_clk_freq)
+
+        self.submodules.uart_bridge = UARTWishboneBridge(
+               platform.request("serial"),
+               sys_clk_freq,
+               baudrate=115200)
+        self.add_wb_master(self.uart_bridge.wishbone)
 
         # SPI Flash --------------------------------------------------------------------------------
         self.add_spi_flash(mode="1x", dummy_cycles=8)
@@ -96,15 +106,8 @@ class BaseSoC(SoCCore):
             size   = 32*kB,
             linker = True)
         )
-        
-        # Wishbone ---------------------------------------------------------------------------------
-        wb_bus = wishbone.Interface(data_width=16,adr_width=32)
-        self.bus.add_master(master=wb_bus)
-        platform.add_extension(wb_bus.get_ios("wb"))
-        wb_pads = platform.request("wb")
-        self.comb += wb_bus.connect_to_pads(wb_pads, mode="slave")
 
-        # Leds ---------------- ---------------------------------------------------------------------
+        # Leds -------------------------------------------------------------------------------------
         self.submodules.leds = LedChaser(
             pads         = platform.request_all("user_led"),
             sys_clk_freq = sys_clk_freq)
@@ -125,6 +128,8 @@ def main():
     parser.add_argument("--build",             action="store_true", help="Build bitstream")
     parser.add_argument("--bios-flash-offset", default=0x60000,     help="BIOS offset in SPI Flash (default: 0x60000)")
     parser.add_argument("--sys-clk-freq",      default=50e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--output_dir",        default="build",         help="Output directory of csr")
+    parser.add_argument("--csr_csv",           default="build/csr.csv", help="csr.csv")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
@@ -134,7 +139,7 @@ def main():
          sys_clk_freq      = int(float(args.sys_clk_freq)),
          **soc_core_argdict(args)
     )
-    builder = Builder(soc, **builder_argdict(args))
+    builder = Builder(soc,  **builder_argdict(args))
     builder.build(run=args.build)
 
 if __name__ == "__main__":
