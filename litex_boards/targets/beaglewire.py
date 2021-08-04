@@ -18,7 +18,7 @@ from litex.build.io import DDROutput
 #from litex.build.io import CRG
 
 from litex_boards.platforms import beaglewire
-
+from litex.soc.interconnect import wishbone
 from litex.soc.cores.spi_flash import SpiFlash
 from litex.soc.cores.clock import iCE40PLL
 from litex.soc.integration.soc_core import *
@@ -80,7 +80,7 @@ class BaseSoC(SoCCore):
 
         # Set CPU variant / reset address
         kwargs["cpu_reset_address"] = self.mem_map["spiflash"] + bios_flash_offset
-        kwargs["uart_name"]   = "crossover"
+        #kwargs["uart_name"]   = "crossover"
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq, 
@@ -91,11 +91,18 @@ class BaseSoC(SoCCore):
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = _CRG(platform, sys_clk_freq)
 
-        self.submodules.uart_bridge = UARTWishboneBridge(
-               platform.request("serial"),
-               sys_clk_freq,
-               baudrate=115200)
-        self.add_wb_master(self.uart_bridge.wishbone)
+        # Wishbone ---------------------------------------------------------------------------------
+        wb_bus = wishbone.Interface(data_width=32,adr_width=32)
+        self.bus.add_master(master=wb_bus)
+        platform.add_extension(wb_bus.get_ios("wb"))
+        wb_pads = platform.request("wb")
+        self.comb += wb_bus.connect_to_pads(wb_pads, mode="slave")
+
+        #self.submodules.uart_bridge = UARTWishboneBridge(
+        #       platform.request("serial"),
+        #       sys_clk_freq,
+        #       baudrate=115200)
+        #self.add_wb_master(self.uart_bridge.wishbone)
 
         # SPI Flash --------------------------------------------------------------------------------
         self.add_spi_flash(mode="1x", dummy_cycles=8)
@@ -128,8 +135,8 @@ def main():
     parser.add_argument("--build",             action="store_true", help="Build bitstream")
     parser.add_argument("--bios-flash-offset", default=0x60000,     help="BIOS offset in SPI Flash (default: 0x60000)")
     parser.add_argument("--sys-clk-freq",      default=50e6,        help="System clock frequency (default: 50MHz)")
-    parser.add_argument("--output_dir",        default="build",         help="Output directory of csr")
-    parser.add_argument("--csr_csv",           default="build/csr.csv", help="csr.csv")
+    #parser.add_argument("--output_dir",        default="build",         help="Output directory of csr")
+    #parser.add_argument("--csr_csv",           default="build/csr.csv", help="csr.csv")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
