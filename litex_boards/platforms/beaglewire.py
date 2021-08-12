@@ -1,129 +1,80 @@
 #
 # This file is part of LiteX-Boards.
 #
-# Copyright (c) 2021 Omkar Bhilare <ombhilare999@gmail.com>
+# Copyright (c) 2020 Michael Welling <mwelling@ieee.org>
 # SPDX-License-Identifier: BSD-2-Clause
-
-# BeagleWire FPGA Cape:
-# - Crowd Supply campaign: https://www.crowdsupply.com/qwerty-embedded-design/beaglewire
-# - Docs: https://beaglewire.github.io/
-# - Software Repo: https://github.com/BeagleWire/BeagleWire
-# - Hardware Files: https://github.com/BeagleWire/beagle-wire
 
 from litex.build.generic_platform import *
 from litex.build.lattice import LatticePlatform
-from litex.build.lattice.programmer import IceStormProgrammer
+from litex.build.lattice.programmer import TinyProgProgrammer
 
 # IOs ----------------------------------------------------------------------------------------------
 
 _io = [
-
     # Clk / Rst
-    ("clk12", 0, Pins("61"), IOStandard("LVCMOS33")),
+    ("clk100", 0, Pins("61"), IOStandard("LVCMOS33")),
 
     # Leds
-    ("user_led_0",    0, Pins("28"), IOStandard("LVCMOS33")),
-    ("user_led_1",    1, Pins("29"), IOStandard("LVCMOS33")),
-    ("user_led_2",    2, Pins("31"), IOStandard("LVCMOS33")),
-    ("user_led_3",    3, Pins("32"), IOStandard("LVCMOS33")), 
+    ("user_led", 0, Pins("28 29 31 32"), IOStandard("LVCMOS33")),
 
-    # Button
-    ("user_btn_0",    0, Pins("25"), IOStandard("LVCMOS33")),
-    ("user_btn_1",    1, Pins("26"), IOStandard("LVCMOS33")),
-
-    # GPMC
-     ("gpmc", 0,
-        # GPMC_AD
-        Subsignal("gpmc_ad_0", Pins("134"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_1", Pins("136"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_3", Pins("21"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_4", Pins("22"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_5", Pins("135"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_6", Pins("138"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_7", Pins("23"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_8", Pins("24"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_9", Pins("139"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_10", Pins("2"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_11", Pins("1"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_12", Pins("141"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_13", Pins("3"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_14", Pins("144"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_ad_15", Pins("143"), IOStandard("LVCMOS33")),
-        # GPMC_Control
-        Subsignal("gpmc_advn", Pins("19"),  IOStandard("LVCMOS33")),
-        Subsignal("gpmc_csn1", Pins("137"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_clk",  Pins("142"), IOStandard("LVCMOS33")),
-        Subsignal("gpmc_wein", Pins("18"),  IOStandard("LVCMOS33")),
-        Subsignal("gpmc_oen",  Pins("20"),  IOStandard("LVCMOS33")),
-    ),
+    ("user_btn_n",    0, Pins( "25"), IOStandard("LVCMOS33")),
 
     # SPIFlash
     ("spiflash", 0,
-        Subsignal("miso", Pins("67"), IOStandard("LVCMOS33")),
-        Subsignal("mosi", Pins("68"), IOStandard("LVCMOS33")),
-        Subsignal("sck",  Pins("70"), IOStandard("LVCMOS33")),
-        Subsignal("ss",   Pins("71"), IOStandard("LVCMOS33")),    
+        Subsignal("cs_n", Pins("71"), IOStandard("LVCMOS33")),
+        Subsignal("clk",  Pins("70"), IOStandard("LVCMOS33")),
+        Subsignal("mosi", Pins("67"), IOStandard("LVCMOS33")),
+        Subsignal("miso", Pins("68"), IOStandard("LVCMOS33")),
     ),
 
-    #sdram
+    # SDR SDRAM
+    ("sdram_clock", 0, Pins("93"), IOStandard("LVCMOS33")),
     ("sdram", 0,
-        #SDRAM Address 
-        Subsignal("sdram_addr_0", Pins("118"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_1", Pins("117"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_2", Pins("116"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_3", Pins("101"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_4", Pins("81"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_5", Pins("83"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_6", Pins("90"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_7", Pins("91"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_8", Pins("82"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_9", Pins("84"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_10", Pins("119"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_11", Pins("85"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_addr_12", Pins("87"), IOStandard("LVCMOS33")),
-        #SDRAM data 
-        Subsignal("sdram_data_0", Pins("96"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_data_1", Pins("97"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_data_2", Pins("98"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_data_3", Pins("99"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_data_4", Pins("95"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_data_5", Pins("80"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_data_6", Pins("79"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_data_7", Pins("78"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_bank_0", Pins("121"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_bank_1", Pins("120"), IOStandard("LVCMOS33")),
-        #SDRAM Control 
-        Subsignal("sdram_clk", Pins("93"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_cke", Pins("88"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_we",  Pins("128"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_cs",  Pins("122"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_dqm", Pins("94"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_ras", Pins("124"), IOStandard("LVCMOS33")),
-        Subsignal("sdram_cas", Pins("125"), IOStandard("LVCMOS33")),
+        Subsignal("a",     Pins("118 117 116 101 81 83 90 91 82 84 119 85 87")),
+        Subsignal("dq",    Pins("96 97 98 99 95 80 79 78")),
+        Subsignal("we_n",  Pins("128")),
+        Subsignal("ras_n", Pins("124")),
+        Subsignal("cas_n", Pins("125")),
+        Subsignal("cs_n",  Pins("122")),
+        Subsignal("cke",   Pins("88")),
+        Subsignal("ba",    Pins("121 120")),
+        Subsignal("dm",    Pins("94")),
+        IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST")
     ),
 ]
 
 # Connectors ---------------------------------------------------------------------------------------
 
 _connectors = [
-    ("PMOD1", "37  39  42  44  38  41  43  45"),
-    ("PMOD2", "47  49  55  60  48  52  56  62"),
-    ("PMOD3", "107 112 114 129 110 113 115 130"),
-    ("PMOD4", "7   9   15  12  4   8   10  11")
+    # A2-H2, Pins 1-13
+    # H9-A6, Pins 14-24
+    # G1-J2, Pins 25-31
+    ("GPIO",  "37 39 42 44 38 41 43 45"),
+    ("grove", "73 74 75 76 104 102 106 105")
+]
+
+# Default peripherals
+serial = [
+    ("serial", 0,
+        Subsignal("tx", Pins("GPIO:0")),
+        Subsignal("rx", Pins("GPIO:1")),
+        IOStandard("LVCMOS33")
+    )
 ]
 
 # Platform -----------------------------------------------------------------------------------------
 
 class Platform(LatticePlatform):
-    default_clk_name   = "clk12"
-    default_clk_period = 1e9/12e6
+    default_clk_name   = "clk100"
+    default_clk_period = 1e9/100e6
 
     def __init__(self, toolchain="icestorm"):
-        LatticePlatform.__init__(self, "ice40-hx8k-tq144", _io, _connectors, toolchain=toolchain)
+        LatticePlatform.__init__(self, "ice40-hx8k-tq144:4k", _io, _connectors, toolchain=toolchain)
+        self.add_extension(serial)
 
     def create_programmer(self):
-        return IceStormProgrammer()
+        return TinyProgProgrammer()
 
     def do_finalize(self, fragment):
         LatticePlatform.do_finalize(self, fragment)
-        self.add_period_constraint(self.lookup_request("clk12", loose=True), 1e9/12e6)
+        self.add_period_constraint(self.lookup_request("clk100", loose=True), 1e9/100e6)
